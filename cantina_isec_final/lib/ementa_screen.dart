@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:cantina_isec/edit_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 const String url_menu = 'http://10.0.2.2:8080/menu';
 const String url_image = 'http://10.0.2.2:8080/images/';
@@ -90,6 +91,9 @@ class _EmentaScreenState extends State<EmentaScreen> {
   List<FoodClass> list = <FoodClass>[];
   List<EmentaClass> ementas = <EmentaClass>[];
   List<FoodClass> listUpdated = <FoodClass>[];
+  List<FoodClass> finalList = <FoodClass>[];
+
+
   final List<String> DAYS = [
     "MONDAY",
     "TUESDAY",
@@ -116,46 +120,136 @@ class _EmentaScreenState extends State<EmentaScreen> {
   }
 
   Future<void> _fetchCantinaEmentas() async {
+
     list.clear();
     ementas.clear();
     listUpdated.clear();
+    finalList.clear();
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('lastStoredEmenta');
+    if (token != null) {
+      print("Ding Dong, your opinion is wrong");
+      final List<dynamic> json = jsonDecode(token);
+      finalList = json.map((dynamic e) => FoodClass.fromJson(e)).toList();
+      setState(() {});
+    }
+    else{
+      try {
+        setState(() => _fetchingData = true);
+        http.Response response = await http.get(Uri.parse(url_menu));
+        if (response.statusCode == HttpStatus.ok ||
+            response.statusCode == HttpStatus.created) {
+          //final Map<String,dynamic> content = json.decode(response.body);
+          final Map<String, dynamic> content =
+          jsonDecode(utf8.decode(response.bodyBytes));
+
+          for (int i = 0; i < 5; i++) {
+            //list.add(EmentaClass.fromJson(content[DAYS[i]]));
+          }
+          int weekday = DateTime.now().weekday;
+          int i = (weekday > 5 ? 1 : weekday);
+          while (ementas.length < 5) {
+            ementas.add(EmentaClass.fromJson(content[DAYS[i - 1]]));
+
+            if ((++i) > 5) i = 1;
+          }
+          if (DateTime.now().weekday <= 5) {}
+          //debugPrint(list[i].original.meat);
+
+          for (int i = 0; i < 5; i++) {
+            if(ementas[i].update.soup.isEmpty && ementas[i].update.fish.isEmpty && ementas[i].update.meat.isEmpty && ementas[i].update.vegetarian.isEmpty && ementas[i].update.desert.isEmpty){
+              finalList.add( ementas[i].original);
+            }
+            else{
+              finalList.add( ementas[i].update);
+            }
+            list.add(ementas[i].original);
+            listUpdated.add(ementas[i].update);
+          }
+
+          print("TAMANHO " + finalList.length.toString());
+
+          final String storeData = jsonEncode(finalList.map<Map<String,dynamic>>((FoodClass e) => e.toJson()).toList());
+          prefs.setString('lastStoredEmenta', storeData);
+
+
+          //ementa = (content as List).map((e) => EmentaClass.fromJson(e)).toList();
+        }
+      } catch (ex) {
+        debugPrint('Something went wrong: $ex');
+      } finally {
+
+        setState(() => _fetchingData = false);
+      }
+    }
 
 
     debugPrint(DateTime.now().weekday.toString());
-    try {
-      setState(() => _fetchingData = true);
-      http.Response response = await http.get(Uri.parse(url_menu));
-      if (response.statusCode == HttpStatus.ok ||
-          response.statusCode == HttpStatus.created) {
-        //final Map<String,dynamic> content = json.decode(response.body);
-        final Map<String, dynamic> content =
-            jsonDecode(utf8.decode(response.bodyBytes));
 
-        for (int i = 0; i < 5; i++) {
-          //list.add(EmentaClass.fromJson(content[DAYS[i]]));
+  }
+  Future<void> _forceFetchCantinaEmentas() async {
+
+    list.clear();
+    ementas.clear();
+    listUpdated.clear();
+    finalList.clear();
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('lastStoredEmenta');
+
+      try {
+        setState(() => _fetchingData = true);
+        http.Response response = await http.get(Uri.parse(url_menu));
+        if (response.statusCode == HttpStatus.ok ||
+            response.statusCode == HttpStatus.created) {
+          //final Map<String,dynamic> content = json.decode(response.body);
+          final Map<String, dynamic> content =
+          jsonDecode(utf8.decode(response.bodyBytes));
+
+          for (int i = 0; i < 5; i++) {
+            //list.add(EmentaClass.fromJson(content[DAYS[i]]));
+          }
+          int weekday = DateTime.now().weekday;
+          int i = (weekday > 5 ? 1 : weekday);
+          while (ementas.length < 5) {
+            ementas.add(EmentaClass.fromJson(content[DAYS[i - 1]]));
+
+            if ((++i) > 5) i = 1;
+          }
+          if (DateTime.now().weekday <= 5) {}
+          //debugPrint(list[i].original.meat);
+
+          for (int i = 0; i < 5; i++) {
+            if(ementas[i].update.soup.isEmpty && ementas[i].update.fish.isEmpty && ementas[i].update.meat.isEmpty && ementas[i].update.vegetarian.isEmpty && ementas[i].update.desert.isEmpty){
+              finalList.add( ementas[i].original);
+            }
+            else{
+              finalList.add( ementas[i].update);
+            }
+            list.add(ementas[i].original);
+            listUpdated.add(ementas[i].update);
+          }
+
+          print("TAMANHO " + finalList.length.toString());
+
+          final String storeData = jsonEncode(finalList.map<Map<String,dynamic>>((FoodClass e) => e.toJson()).toList());
+          prefs.setString('lastStoredEmenta', storeData);
+
+
+          //ementa = (content as List).map((e) => EmentaClass.fromJson(e)).toList();
         }
-        int weekday = DateTime.now().weekday;
-        int i = (weekday > 5 ? 1 : weekday);
-        while (ementas.length < 5) {
-          ementas.add(EmentaClass.fromJson(content[DAYS[i - 1]]));
+      } catch (ex) {
+        debugPrint('Something went wrong: $ex');
+      } finally {
 
-          if ((++i) > 5) i = 1;
-        }
-        if (DateTime.now().weekday <= 5) {}
-        //debugPrint(list[i].original.meat);
-
-        for (int i = 0; i < 5; i++) {
-          list.add(ementas[i].original);
-          listUpdated.add(ementas[i].update);
-        }
-
-        //ementa = (content as List).map((e) => EmentaClass.fromJson(e)).toList();
+        setState(() => _fetchingData = false);
       }
-    } catch (ex) {
-      debugPrint('Something went wrong: $ex');
-    } finally {
-      setState(() => _fetchingData = false);
-    }
+
+
+
+    debugPrint(DateTime.now().weekday.toString());
+
   }
 
   @override
@@ -174,10 +268,10 @@ class _EmentaScreenState extends State<EmentaScreen> {
           const Divider(thickness: 20.0, color: Colors.grey),
           const SizedBox(height: 15),
           if (_fetchingData) const CircularProgressIndicator(),
-          if (!_fetchingData && list != null && list.isNotEmpty)
+          if (!_fetchingData && finalList.isNotEmpty)
             Container(
                       child: ListView.separated(
-                        itemCount: list.length,
+                        itemCount: finalList.length,
                         scrollDirection: Axis.vertical,
                         controller: ScrollController(),
                         shrinkWrap: true,
@@ -186,10 +280,11 @@ class _EmentaScreenState extends State<EmentaScreen> {
                           color: Colors.grey,
                         ),
                         itemBuilder: (BuildContext context, int index) => ListTile(
+                          tileColor: listUpdated.contains(finalList[index]) ? Colors.green : Colors.white,
                           title: Column(
                             children: [
                               Text(
-                                list[index].weekDay,
+                                finalList[index].weekDay,
                                 textAlign: TextAlign.start,
                                 textScaleFactor: 1,
                               )
@@ -198,42 +293,33 @@ class _EmentaScreenState extends State<EmentaScreen> {
                           subtitle: Column(
                             children: [
                               const SizedBox(height: 13),
-                              Text("Sopa: ${list[index].soup}",
+                              Text("Sopa: ${finalList[index].soup}",
                                   textAlign: TextAlign.start),
                               const SizedBox(height: 13),
-                              Text("Prato de Peixe: ${list[index].fish}"),
+                              Text("Prato de Peixe: ${finalList[index].fish}"),
                               const SizedBox(height: 13),
-                              Text("Prato de Carne: ${list[index].meat}"),
+                              Text("Prato de Carne: ${finalList[index].meat}"),
                               const SizedBox(height: 13),
                               Text(
-                                  "Prato Vegetariano: ${list[index].vegetarian}"),
+                                  "Prato Vegetariano: ${finalList[index].vegetarian}"),
                               const SizedBox(height: 13),
-                              Text("Sobremesa: ${list[index].desert}"),
+                              Text("Sobremesa: ${finalList[index].desert}"),
                               const SizedBox(height: 13)
                             ],
                           ),
                           onLongPress: () {
                             Navigator.of(context).pushNamed(EditScreen.routeName,
-                                arguments: list[index]);
+                                arguments: finalList[index]);
 
 
                           },
                           trailing:
-                              _getImage(list[index].img),
+                              _getImage(finalList[index].img),
                         ),
                       )),
-              const Divider(thickness: 20.0, color: Colors.yellow),
 
               const SizedBox(height: 15),
-
-
-
-              const Text("Ementas Semanais Atualizadas!  ",
-                  textScaleFactor: 1.7, textAlign: TextAlign.start),
-              const SizedBox(height: 15),
-              const Divider(thickness: 20.0, color: Colors.yellow),
-              const SizedBox(height: 15),
-              Container(
+              /*Container(
                   child: ListView.separated(
                     itemCount: list.length,
                     scrollDirection: Axis.vertical,
@@ -277,12 +363,12 @@ class _EmentaScreenState extends State<EmentaScreen> {
                       trailing:
                       _getImage(listUpdated[index].img),
                     ),
-                  )),
+                  )),*/
                 ],
               ),
             ),
         floatingActionButton: FloatingActionButton(
-          onPressed: _fetchCantinaEmentas,
+          onPressed: _forceFetchCantinaEmentas,
           tooltip: 'Increment',
           child: const Icon(Icons.refresh),
         ));
