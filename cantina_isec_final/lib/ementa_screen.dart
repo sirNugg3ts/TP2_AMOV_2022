@@ -117,6 +117,8 @@ class _EmentaScreenState extends State<EmentaScreen> {
 
   Future<void> _fetchCantinaEmentas() async {
     list.clear();
+    ementas.clear();
+    listUpdated.clear();
 
 
     debugPrint(DateTime.now().weekday.toString());
@@ -213,6 +215,8 @@ class _EmentaScreenState extends State<EmentaScreen> {
                           onLongPress: () {
                             Navigator.of(context).pushNamed(EditScreen.routeName,
                                 arguments: list[index]);
+
+
                           },
                           trailing:
                               _getImage(list[index].img),
@@ -284,47 +288,3 @@ class _EmentaScreenState extends State<EmentaScreen> {
         ));
   }
 }
-
-/*
-
-        //debugPrint("BODY ->" + response.body);
-        //debugPrint("BODY ->");
-        //debugPrint("LIST HARDCODE-> " + json.decode(response.body).toString());
-        final Map<String, dynamic> decodedData = json.decode(response.body) ;
-        final Iterable<MapEntry<String, dynamic>> entries = decodedData.entries;
-        //EmentaSemanalClass a = (decodedData as EmentaSemanalClass);
-        debugPrint("FIRST GETTED-> " + entries.first.toString());
-        debugPrint("SECOND GETTED-> " + decodedData["MONDAY"].toString());
-        EmentaClass mon = EmentaClass.fromJson(decodedData);
-        //List<dynamic> a= (decodedData as List).map((e) => EmentaClass.fromJson(e)).toList();
-        //ementa = (decodedData as List).map((e) => EmentaClass.fromJson(e)).toList();
-
-
-
-
-
-
-        //EmentaClass a = decodedData["MONDAY"] as EmentaClass;
-        //debugPrint("THIRD GETTED-> " + decodedData["MONDAY"].toString());
-
-        //ementa = (decodedData["MONDAY"] as List).map((e)
-        //  => EmentaClass.fromJson(e)).toList();
-        //EmentaClass monday = entries.first as EmentaClass;
-        //EmentaClass b = (decodedData as EmentaClass);
-        //    .map((DAY) => EmentaClass.fromJson(DAY)).toList();
-
-        //setState(() => _catFacts = (decodedData['data'] as List)
-        //             .map((fact) => CatFact.fromJson(fact)).toList());
-        //debugPrint("LIST GETTED-> " + monday.toString());
-
-
-
-
-        //_monday = json.decode(response.body);
-        /*setState(() =>  _listEmenta= (decodedData as List)
-            .map((MONDAY) => EmentaSemanalClass.fromJson(MONDAY)).toList());
-        debugPrint(_listEmenta.toString());
-      }*/
-
-
- */

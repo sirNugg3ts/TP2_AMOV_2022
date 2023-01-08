@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 const String url_menu = 'http://10.0.2.2:8080/menu';
-const String url_image = 'http://10.0.2.2:8080/image/';
+const String url_image = 'http://10.0.2.2:8080/images/';
 
 class CameraPage extends StatefulWidget {
   final List<CameraDescription>? cameras;
@@ -159,46 +159,72 @@ class EditScreen extends StatefulWidget {
 }
 
 class _EditScreenState extends State<EditScreen> {
+
+  bool _isVisible = false;
+
   late final FoodClass _ementa =
       ModalRoute.of(context)!.settings.arguments as FoodClass;
 
-  late Image imagemEmenta =Image.network(
-   url_image + _ementa.img,
-    errorBuilder:
-        (BuildContext context, Object exception, StackTrace? stackTrace) {
-      return Image.asset('assets/images/placeholder.jpg');
-    },
+  late Image imagemEmenta;
+
+  late final FoodClass _original = FoodClass(
+     img: _ementa.img,
+     weekDay: _ementa.weekDay,
+    soup : _ementa.soup,
+    fish : _ementa.fish,
+    meat : _ementa.meat,
+    vegetarian : _ementa.vegetarian,
+    desert : _ementa.desert
   );
 
-
-
-  var _isVisible = false;
+  bool _isNewImage = false;
 
 
 
 
   Future<void> editDone() async {
-    var test = _ementa
-        .toJson()
-        .map((key, value) => MapEntry(key, value.toString() ?? "null")).toString();
-    //print(test);
+
+    var image;
+    if(_isNewImage){
+      image = _ementa.img;
+    }else{
+      image = "null";
+    }
+
+
+    var jsono = jsonEncode(<String, String>{
+      'img': image,
+      'soup': _ementa.soup,
+      'fish': _ementa.fish,
+      'meat': _ementa.meat,
+      'vegetarian': _ementa.vegetarian,
+      'desert': _ementa.desert,
+    });
+    print(jsono);
+
     //TODO POR AQUI O ENVIO DO POST ainda nao funciona
-    http.Response a = await http.post(Uri.parse(url_menu),
-    //header json
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(_ementa.toJson()));
-     //body: _updateEmenta
-       //     .toJson()
-         //   .map((key, value) => MapEntry(key, value.toString() ?? "null")));
-    print(_ementa.toJson());
+    http.Response a =await http.post(
+      Uri.parse(url_menu),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'img': image,
+        'soup': _ementa.soup,
+        'fish': _ementa.fish,
+        'meat': _ementa.meat,
+        'vegetarian': _ementa.vegetarian,
+        'desert': _ementa.desert,
+        'weekDay': _ementa.weekDay,
+      }),
+    );
     print("status ${a.statusCode}");
     Navigator.of(context).pushNamed(EmentaScreen.routeName);
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
         backgroundColor: Colors.white70,
         appBar: AppBar(title: const Text("Editar ementa")),
@@ -211,7 +237,7 @@ class _EditScreenState extends State<EditScreen> {
               const Divider(thickness: 20.0, color: Colors.grey),
               const SizedBox(height: 7),
               Text(
-                _ementa.weekDay,
+                _original.weekDay,
                 textScaleFactor: 2.1,
               ),
               const SizedBox(height: 7),
@@ -227,7 +253,7 @@ class _EditScreenState extends State<EditScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      _ementa.soup,
+                      _original.soup,
                       textAlign: TextAlign.center,
                       textScaleFactor: 1.1,
                     ),
@@ -246,6 +272,7 @@ class _EditScreenState extends State<EditScreen> {
                       setState(() => {
 
                               _ementa.soup = value,
+                        _isVisible = true
 
                           });
                     }),
@@ -260,7 +287,7 @@ class _EditScreenState extends State<EditScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      _ementa.fish,
+                      _original.fish,
                       textAlign: TextAlign.center,
                       textScaleFactor: 1.1,
                     ),
@@ -279,6 +306,7 @@ class _EditScreenState extends State<EditScreen> {
                       setState(() => {
 
                               _ementa.fish = value,
+                        _isVisible = true
 
                           });
                     }),
@@ -293,7 +321,7 @@ class _EditScreenState extends State<EditScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      _ementa.meat,
+                      _original.meat,
                       textAlign: TextAlign.center,
                       textScaleFactor: 1.1,
                     ),
@@ -312,6 +340,7 @@ class _EditScreenState extends State<EditScreen> {
                       setState(() => {
 
                               _ementa.meat = value,
+                        _isVisible = true
 
                           });
                     }),
@@ -326,7 +355,7 @@ class _EditScreenState extends State<EditScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      _ementa.vegetarian,
+                      _original.vegetarian,
                       textAlign: TextAlign.center,
                       textScaleFactor: 1.1,
                     ),
@@ -345,6 +374,7 @@ class _EditScreenState extends State<EditScreen> {
                       setState(() => {
 
                               _ementa.vegetarian = value,
+                        _isVisible = true
                           });
                     }),
               ),
@@ -358,7 +388,7 @@ class _EditScreenState extends State<EditScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      _ementa.desert,
+                      _original.desert,
                       textAlign: TextAlign.center,
                       textScaleFactor: 1.1,
                     ),
@@ -376,11 +406,17 @@ class _EditScreenState extends State<EditScreen> {
                     onChanged: (value) {
                       setState(() => {
                            _ementa.desert = value,
+                        _isVisible = true
 
                           });
                     }),
               ),
-              SizedBox(width: 300, child: imagemEmenta),
+              SizedBox(width: 300, child: _isNewImage ? imagemEmenta : Image.network(url_image + _ementa.img,
+              errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                return const Image(image: AssetImage('assets/images/placeholder.jpg'));
+              }
+                ,),
+              ),
               SizedBox(
                   width: 300,
                   child: Column(children: [
@@ -392,20 +428,6 @@ class _EditScreenState extends State<EditScreen> {
                           _getNewEmentaImage(context);
 
                       },
-
-
-
-                            /*
-                            () async {
-                          await availableCameras()
-                              .then((value) => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => CameraPage(
-                                            cameras: value,
-                                          ))));
-                        },
-                        */
                         child: const Text("Atualizar foto da ementa")),
                     const SizedBox(height: 12)
                   ])),
@@ -435,6 +457,8 @@ class _EditScreenState extends State<EditScreen> {
     if(!mounted) return;
 
     setState(() {
+      _isNewImage = true;
+      _isVisible = true;
       imagemEmenta = Image.file(File(image.path));
       List<int> imageBytes = File(image.path).readAsBytesSync();
       String base64Image = base64Encode(imageBytes);
